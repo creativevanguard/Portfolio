@@ -710,7 +710,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('on
 
 /* ---------- rotatable mugshot ---------- */
 const cl=$('#cloud'),hint=$('#hhint');
-const FD={eye_left_x:.406,eye_left_y:.405,eye_right_x:.606,eye_right_y:.417,eye_w:.046,eye_h:.016,nose_x:.495,nose_y:.503,hairline:.33,nose_x_45:.692,nose_x_90:.88};
+const FD={eye_left_x:.406,eye_left_y:.405,eye_right_x:.606,eye_right_y:.417,eye_w:.046,eye_h:.016,nose_x:.495,nose_y:.503,hairline:.33};
 const F={};for(const k in FD){const v=parseFloat((A.face||{})[k]);F[k]=isFinite(v)&&v>0?v:FD[k]}
 const VW=A.views||{};
 const H={yaw:0,pitch:0,vel:0,pv:0,mode:'follow',dragX:0,dragY:0,dragYaw:0,dragPitch:0,rel:0,last:0,lastYaw:0,
@@ -733,21 +733,20 @@ function prep(img,isFront){
     const fx=(u-.5)/.27,fy=(v-.47)/.32;z+=Math.max(0,1-fx*fx-fy*fy)*.25;
     if(isFront){const nx=(u-F.nose_x)/.05,ny=(v-F.nose_y+.03)/.085;z+=.2*Math.exp(-(nx*nx+ny*ny))}
     d[i*4]=clamp(z,0,1)*255;d[i*4+1]=clamp(hr[i]*1.4,0,1)*255;d[i*4+2]=0;d[i*4+3]=255}
-  let mnX=1,mxX=0;for(let y=Math.round(dh*.15);y<Math.round(dh*.6);y++)for(let x=0;x<dw;x++)if(al[y*dw+x]>.5){mnX=Math.min(mnX,x/dw);mxX=Math.max(mxX,x/dw)}
-  sg.putImageData(px,0,0);return{img:c,dat:s,ar:NW/NH,mnX,mxX};
+  sg.putImageData(px,0,0);return{img:c,dat:s,ar:NW/NH};
 }
 const VS=`attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}`;
 const FS=`precision highp float;varying vec2 v;
 uniform sampler2D iA,dA,iB,dB;uniform float mixAB,flA,flB,eA,eB,blink,time,fade;
-uniform vec2 offA,offB,gaze,hair,light;uniform vec3 mA,mB;uniform vec4 fit,eyeL,eyeR;
+uniform vec2 offA,offB,gaze,hair,light;uniform vec4 fit,eyeL,eyeR;
 vec2 fl(vec2 s,float f){return vec2(f>.5?1.-s.x:s.x,s.y);}
 vec2 eyeW(vec2 s,vec4 e){vec2 d=(s-e.xy)/e.zw;float r=dot(d,d);
   if(r<1.){float f=(1.-r)*(1.-r);s-=vec2(gaze.x*e.z*.24,gaze.y*e.w*.35)*f;}
   vec2 q=(s-e.xy)/vec2(e.z*1.05,e.w*1.5);float r2=dot(q,q);
   if(blink>0.&&r2<1.){float k=smoothstep(1.,.35,r2)*blink;s.y=mix(s.y,e.y-e.w*.95,k);}
   return s;}
-vec4 view(sampler2D im,sampler2D dt,vec2 u0,vec2 off,vec3 m,float f,float eyes){
-  vec2 u=vec2(u0.x*m.x+m.y,u0.y);vec2 s=u;for(int i=0;i<6;i++){float d=texture2D(dt,fl(clamp(s,0.,1.),f)).r;s=u-off*(d-.3);}
+vec4 view(sampler2D im,sampler2D dt,vec2 u,vec2 off,float f,float eyes){
+  vec2 s=u;for(int i=0;i<6;i++){float d=texture2D(dt,fl(clamp(s,0.,1.),f)).r;s=u-off*(d-.3);}
   float hw=texture2D(dt,fl(clamp(s,0.,1.),f)).g;
   float tip=smoothstep(.45,0.,s.y)*.6+.4;
   s-=hw*tip*vec2(hair.x+.0022*sin(time*1.6+s.y*22.+s.x*8.)+.0012*sin(time*2.9+s.x*30.),hair.y+.0012*sin(time*1.3+s.x*17.));
@@ -759,7 +758,7 @@ vec4 view(sampler2D im,sampler2D dt,vec2 u0,vec2 off,vec3 m,float f,float eyes){
   float sp=pow(max(dot(reflect(-L,n),vec3(0.,0.,1.)),0.),14.);
   c.rgb=c.rgb*(.9+.1*max(dot(n,L),0.))+sp*.09*c.a;return c;}
 void main(){vec2 u=(v-fit.xy)/fit.zw+.5;
-  vec4 a=view(iA,dA,u,offA,mA,flA,eA);vec4 b=mixAB>.001?view(iB,dB,u,offB,mB,flB,eB):a;
+  vec4 a=view(iA,dA,u,offA,flA,eA);vec4 b=mixAB>.001?view(iB,dB,u,offB,flB,eB):a;
   gl_FragColor=mix(a,b,mixAB)*fade;}`;
 function tex(src,unit){const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
@@ -770,7 +769,7 @@ function initGL(){try{gl=cl.getContext('webgl',{premultipliedAlpha:true,alpha:tr
   try{GP=gl.createProgram();gl.attachShader(GP,sh(gl.VERTEX_SHADER,VS));gl.attachShader(GP,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(GP);gl.useProgram(GP)}catch(e){console.warn(e);gl=null;return false}
   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   const loc=gl.getAttribLocation(GP,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  'iA dA iB dB mixAB flA flB eA eB blink time fade offA offB mA mB gaze hair light fit eyeL eyeR'.split(' ').forEach(n=>U[n]=gl.getUniformLocation(GP,n));
+  'iA dA iB dB mixAB flA flB eA eB blink time fade offA offB gaze hair light fit eyeL eyeR'.split(' ').forEach(n=>U[n]=gl.getUniformLocation(GP,n));
   gl.uniform1i(U.iA,0);gl.uniform1i(U.dA,1);gl.uniform1i(U.iB,2);gl.uniform1i(U.dB,3);gl.clearColor(0,0,0,0);return true}
 function loadImg(src){return new Promise(r=>{if(!src)return r(null);const im=new Image();if(/^https?:/i.test(src))im.crossOrigin='anonymous';im.onload=()=>r(im);im.onerror=()=>r(null);im.src=src})}
 (async function setupHead(){
@@ -778,11 +777,10 @@ function loadImg(src){return new Promise(r=>{if(!src)return r(null);const im=new
   const [fi,l34,ls,r34,rs]=await Promise.all([fsrc,VW.left_34,VW.left_side,VW.right_34,VW.right_side].map(x=>loadImg(media(x))));
   if(!fi){cl.closest('.pc').classList.add('nohead');return}
   if(!initGL()){imgFallback=document.createElement('img');imgFallback.src=fsrc;imgFallback.alt='';imgFallback.className='headimg';cl.replaceWith(imgFallback);headReady=true;return}
-  const NX={0:F.nose_x,45:F.nose_x_45,90:F.nose_x_90,'-45':1-F.nose_x_45,'-90':1-F.nose_x_90};
-  const mk=(im,ang,flip,isF)=>{const p=prep(im,isF);p.ang=ang;p.flip=flip?1:0;p.front=isF;p.ti=tex(p.img,0);p.td=tex(p.dat,1);p.nose=NX[ang];return p};
+  const mk=(im,ang,flip,isF)=>{const p=prep(im,isF);p.ang=ang;p.flip=flip?1:0;p.front=isF;p.ti=tex(p.img,0);p.td=tex(p.dat,1);return p};
   front=mk(fi,0,false,true);VIEWS=[front];
   const L34=l34?mk(l34,-45,false,false):null,LS=ls?mk(ls,-90,false,false):null,R34=r34?mk(r34,45,false,false):null,RS=rs?mk(rs,90,false,false):null;
-  const mir=(v,a)=>v?Object.assign({},v,{ang:a,flip:1,nose:1-v.nose,mnX:1-v.mxX,mxX:1-v.mnX}):null;
+  const mir=(v,a)=>v?Object.assign({},v,{ang:a,flip:1}):null;
   [L34||mir(R34,-45),LS||mir(RS,-90),R34||mir(L34,45),RS||mir(LS,90)].forEach(v=>v&&VIEWS.push(v));
   VIEWS.sort((a,b)=>a.ang-b.ang);const mx=Math.max(...VIEWS.map(v=>Math.abs(v.ang)));maxYaw=mx>=90?90:mx>=45?62:26;
   headReady=true;if($('#v-about').classList.contains('on'))scatter();
@@ -791,7 +789,7 @@ function scatter(){H.intro=performance.now();H.introSign=Math.random()<.5?-1:1;H
   hint&&hint.classList.remove('gone');}
 const head=()=>{const r=(imgFallback||cl).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.42,r}};
 $('#v-about').addEventListener('pointermove',e=>{H.px=e.clientX;H.py=e.clientY;H.lastMove=performance.now();
-  if(H.mode==='drag'){const dx=e.clientX-H.dragX,dy=e.clientY-H.dragY;const ny=clamp(H.dragYaw+dx*(innerWidth<700?.55:.36),-maxYaw-8,maxYaw+8);
+  if(H.mode==='drag'){const dx=e.clientX-H.dragX,dy=e.clientY-H.dragY;const ny=clamp(H.dragYaw+dx*.32,-maxYaw-8,maxYaw+8);
     H.vel=ny-H.yaw;H.yaw=ny;H.pitch=clamp(H.dragPitch+dy*.12,-14,14)}},{passive:true});
 $('#v-about').addEventListener('pointerleave',()=>{H.px=null});
 cl.addEventListener('pointerdown',e=>{H.mode='drag';H.dragX=e.clientX;H.dragY=e.clientY;H.dragYaw=H.yaw;H.dragPitch=H.pitch;H.vel=0;
@@ -807,11 +805,10 @@ function tickAbout(t){  if(!headReady)return;const dt=Math.max(.05,Math.min(50,t
   else if(t>H.nextSac){H.tgx=(Math.random()*2-1)*.8;H.tgy=(Math.random()*2-1)*.4;H.nextSac=t+700+Math.random()*2200}
   const gk=1-Math.pow(.6,dt);H.gx=lerp(H.gx,H.tgx,gk);H.gy=lerp(H.gy,H.tgy,gk);
   // head
-  const follow=maxYaw>=90?58:maxYaw>26?34:22,ty=hasP?H.tgx*follow:Math.sin(t/3800)*follow*.45,tp=hasP?H.tgy*7:Math.sin(t/5100)*3;
+  const follow=maxYaw>26?32:22,ty=hasP?H.tgx*follow:Math.sin(t/3800)*follow*.55,tp=hasP?H.tgy*7:Math.sin(t/5100)*3;
   if(H.mode==='free'){H.yaw+=H.vel*dt;H.vel*=Math.pow(.9,dt);if(Math.abs(H.yaw)>maxYaw){H.yaw=lerp(H.yaw,Math.sign(H.yaw)*maxYaw,.25);H.vel*=.5}
     if(t-H.rel>1600&&Math.abs(H.vel)<.15)H.mode='follow'}
-  const unb=y=>{for(let i=0;i<VIEWS.length-1;i++){const A0=VIEWS[i].ang,B0=VIEWS[i+1].ang,q=(y-A0)/(B0-A0);if(q>.38&&q<.62)return A0+(q<.5?.38:.62)*(B0-A0)}return y};
-  if(H.mode==='follow'){const k=1-Math.pow(t-H.intro<1400?.93:.955,dt);H.yaw=lerp(H.yaw,unb(ty),k);H.pitch=lerp(H.pitch,tp,k)}
+  if(H.mode==='follow'){const k=1-Math.pow(t-H.intro<1400?.93:.955,dt);H.yaw=lerp(H.yaw,ty,k);H.pitch=lerp(H.pitch,tp,k)}
   if(H.mode!=='drag')H.yaw=clamp(H.yaw,-maxYaw-8,maxYaw+8);
   const yv=(H.yaw-H.lastYaw)/dt;H.lastYaw=H.yaw;
   // hair spring
@@ -829,16 +826,12 @@ function tickAbout(t){  if(!headReady)return;const dt=Math.max(.05,Math.min(50,t
   const yawR=H.yaw;let a=VIEWS[0],b=VIEWS[0],w=0;
   for(let i=0;i<VIEWS.length-1;i++)if(yawR>=VIEWS[i].ang&&yawR<=VIEWS[i+1].ang){a=VIEWS[i];b=VIEWS[i+1];w=(yawR-a.ang)/(b.ang-a.ang)}
   if(yawR<VIEWS[0].ang){a=b=VIEWS[0]}if(yawR>VIEWS[VIEWS.length-1].ang){a=b=VIEWS[VIEWS.length-1]}
-  let mA=[1,0,0],mB=[1,0,0];
-  if(a!==b){const wl=w,R=a.ang+b.ang>0,bA=R?a.mnX:a.mxX,bB=R?b.mnX:b.mxX,bt=lerp(bA,bB,wl),nt=lerp(a.nose,b.nose,wl);
-    const aff=(bk,ns)=>{const den=nt-bt;if(Math.abs(den)<.02)return[1,0,0];const sc=(ns-bk)/den;return[sc,bk-bt*sc,0]};
-    mA=aff(bA,a.nose);mB=aff(bB,b.nose);
-    const ws=clamp((w-.43)/.14,0,1);w=ws*ws*(3-2*ws);if(w<.001){b=a;mB=mA}else if(w>.999){a=b;mA=mB;w=0}}else w=0;
+  if(a!==b){const ws=clamp((w-.3)/.4,0,1);w=ws*ws*(3-2*ws);if(w<.001)b=a;else if(w>.999){a=b;w=0}}else w=0;
   const ofs=v=>{const r=clamp(yawR-v.ang,-30,30)*Math.PI/180,p=H.pitch*Math.PI/180;return[Math.sin(r)*.15,-Math.sin(p)*.1]};
   [[a,0],[b,2]].forEach(([v,u])=>{gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,v.ti);gl.activeTexture(gl.TEXTURE1+u);gl.bindTexture(gl.TEXTURE_2D,v.td)});
   const oa=ofs(a),ob=ofs(b),intro=1-H.fade,sc=1+intro*.04;
   gl.uniform4f(U.fit,.5+H.yaw/maxYaw*.012,.52+intro*.02,fw*sc,fh*sc);
-  gl.uniform3f(U.mA,mA[0],mA[1],mA[2]);gl.uniform3f(U.mB,mB[0],mB[1],mB[2]);gl.uniform2f(U.offA,oa[0],oa[1]);gl.uniform2f(U.offB,ob[0],ob[1]);gl.uniform1f(U.mixAB,w);
+  gl.uniform2f(U.offA,oa[0],oa[1]);gl.uniform2f(U.offB,ob[0],ob[1]);gl.uniform1f(U.mixAB,w);
   gl.uniform1f(U.flA,a.flip);gl.uniform1f(U.flB,b.flip);gl.uniform1f(U.eA,a.front?1:0);gl.uniform1f(U.eB,b.front?1:0);
   gl.uniform4f(U.eyeL,F.eye_left_x,F.eye_left_y,F.eye_w,F.eye_h);gl.uniform4f(U.eyeR,F.eye_right_x,F.eye_right_y,F.eye_w,F.eye_h);
   const fy=clamp(1-Math.abs(H.yaw)/40,0,1);gl.uniform2f(U.gaze,clamp(H.gx-H.yaw/60,-1,1)*fy,H.gy*fy);gl.uniform1f(U.blink,H.blink*fy);
