@@ -1,0 +1,153 @@
+media:
+  input: images
+  output: images
+
+content:
+  - name: site
+    label: Portfolio content
+    type: file
+    path: content/site.json
+    format: json
+    fields:
+      - name: name
+        label: Your name
+        type: string
+        required: true
+        description: Shown in the intro animation, the logo, the About page and on the contact letter.
+      - name: role
+        label: Role
+        type: string
+        description: e.g. "Web & brand designer"
+      - name: location
+        label: Location
+        type: string
+      - name: headline
+        label: Home page headline
+        type: string
+        description: Each word melts in separately. Keep it to 3–4 words, e.g. "Web & brand Designer".
+      - name: hero_photo
+        label: Home page photo
+        type: image
+        description: A wide, landscape photo of you (about 2000 px wide). Leave empty to show the illustrated room.
+
+      - name: about
+        label: About page
+        type: object
+        fields:
+          - name: portrait
+            label: Portrait (turns into the particle portrait)
+            type: image
+            description: A head-and-shoulders photo, face centred, on a plain light background works best.
+          - name: lead
+            label: Intro sentence
+            type: text
+          - name: bio
+            label: Bio
+            type: text
+            description: Leave an empty line between paragraphs.
+          - name: experience
+            label: Experience
+            type: object
+            list: true
+            fields:
+              - name: name
+                label: Company / place
+                type: string
+              - name: detail
+                label: Role
+                type: string
+          - name: services
+            label: Services
+            type: object
+            list: true
+            fields:
+              - name: name
+                label: Service
+                type: string
+              - name: detail
+                label: Short detail
+                type: string
+
+      - name: contact
+        label: Contact
+        type: object
+        fields:
+          - name: email
+            label: Email (letters are addressed here)
+            type: string
+            required: true
+          - name: intro
+            label: Contact intro text
+            type: text
+          - name: links
+            label: Links
+            type: object
+            list: true
+            fields:
+              - name: label
+                label: Label
+                type: string
+                description: e.g. WhatsApp, Behance, LinkedIn, Instagram
+              - name: text
+                label: Text shown
+                type: string
+              - name: url
+                label: Link
+                type: string
+                description: "Full address starting with https:// (WhatsApp: https://wa.me/94XXXXXXXXX)"
+
+      - name: projects
+        label: Projects
+        type: object
+        list: true
+        description: Drag to reorder. The first project is shown first.
+        fields:
+          - name: title
+            label: Title
+            type: string
+            required: true
+          - name: subtitle
+            label: Subtitle
+            type: string
+            description: e.g. "Real estate website"
+          - name: year
+            label: Year
+            type: string
+          - name: category
+            label: Category (filter)
+            type: select
+            options:
+              values:
+                - name: web
+                  label: Web
+                - name: print
+                  label: Print
+                - name: brand
+                  label: Brand
+                - name: presentation
+                  label: Presentation
+                - name: motion
+                  label: Motion
+                - name: other
+                  label: Other
+          - name: tags
+            label: Tags
+            type: string
+            list: true
+          - name: description
+            label: Description
+            type: text
+          - name: cover
+            label: Cover image
+            type: image
+            description: Landscape, 3:2 works best (e.g. 1800 × 1200). Leave empty for an illustrated placeholder.
+          - name: gallery
+            label: Gallery images
+            type: image
+            description: Extra images shown when the project is opened.
+            options:
+              multiple:
+                max: 12
+          - name: link
+            label: Live link (optional)
+            type: string

@@ -1,0 +1,164 @@
+{
+  "name": "Dhanu",
+  "role": "Web & brand designer",
+  "location": "Sri Lanka",
+  "headline": "Web & brand Designer",
+  "hero_photo": "",
+  "about": {
+    "portrait": "",
+    "lead": "Web and brand designer who makes real estate and hospitality brands look as good online as their buildings do in person.",
+    "bio": "Years inside a Dubai real estate agency taught me the work that actually sells property: launch brochures, investor presentations, community market reports and the client documents that close deals.\n\nNow based in Sri Lanka, I design websites and brand systems for developers, holiday-home operators and founders — from first concept in Figma to the final responsive page.",
+    "experience": [
+      {
+        "name": "Real estate agency, Dubai",
+        "detail": "In-house designer"
+      },
+      {
+        "name": "Ellington Properties",
+        "detail": "Marketing design"
+      },
+      {
+        "name": "Pangea Dubai",
+        "detail": "Presentations"
+      },
+      {
+        "name": "No Sugar",
+        "detail": "Founder, own brand"
+      }
+    ],
+    "services": [
+      {
+        "name": "Website UI design",
+        "detail": "Desktop & mobile"
+      },
+      {
+        "name": "Sales presentations",
+        "detail": "Investor & launch decks"
+      },
+      {
+        "name": "Market reports",
+        "detail": "Editorial & data"
+      },
+      {
+        "name": "Brand identity",
+        "detail": "Logo, type, colour"
+      }
+    ]
+  },
+  "contact": {
+    "email": "hello@yourname.com",
+    "intro": "Write me a letter about your project. I reply to every one within two days.",
+    "links": [
+      {
+        "label": "WhatsApp",
+        "text": "+94 00 000 0000",
+        "url": "https://wa.me/94000000000"
+      },
+      {
+        "label": "Behance",
+        "text": "behance.net/yourname",
+        "url": "https://www.behance.net/"
+      },
+      {
+        "label": "LinkedIn",
+        "text": "linkedin.com/in/yourname",
+        "url": "https://www.linkedin.com/"
+      },
+      {
+        "label": "Instagram",
+        "text": "@yourname",
+        "url": "https://www.instagram.com/"
+      }
+    ]
+  },
+  "projects": [
+    {
+      "title": "Walia Capital",
+      "subtitle": "Real estate website",
+      "year": "2026",
+      "category": "web",
+      "tags": [
+        "Website UI",
+        "Desktop",
+        "Mobile"
+      ],
+      "description": "Homepage and inner pages for a Dubai real estate firm — taken from a PDF concept to a responsive Figma build.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    },
+    {
+      "title": "Escape 24",
+      "subtitle": "Holiday homes website",
+      "year": "2026",
+      "category": "web",
+      "tags": [
+        "Website UI",
+        "Hospitality",
+        "Booking"
+      ],
+      "description": "A calmer, more premium booking site for a Dubai holiday-homes operator, built around the stays rather than the forms.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    },
+    {
+      "title": "Ellington Properties",
+      "subtitle": "Launch collateral",
+      "year": "2024",
+      "category": "print",
+      "tags": [
+        "Brochures",
+        "Launch",
+        "Print"
+      ],
+      "description": "Launch and sales collateral for residential projects — brochures, floor-plan books and campaign pieces.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    },
+    {
+      "title": "Pangea Dubai",
+      "subtitle": "Sales presentations",
+      "year": "2024",
+      "category": "print",
+      "tags": [
+        "Investor decks",
+        "Keynote"
+      ],
+      "description": "Client-facing presentations that turn project data and renders into a clear story for buyers and investors.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    },
+    {
+      "title": "Market reports",
+      "subtitle": "Community data",
+      "year": "2023",
+      "category": "print",
+      "tags": [
+        "Editorial",
+        "Charts"
+      ],
+      "description": "Quarterly community market reports — prices, transactions and supply, designed to be read in five minutes.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    },
+    {
+      "title": "No Sugar",
+      "subtitle": "Own clothing brand",
+      "year": "Ongoing",
+      "category": "brand",
+      "tags": [
+        "Identity",
+        "Apparel",
+        "Social"
+      ],
+      "description": "My statement-driven clothing brand — identity, product graphics and the voice that runs through every drop.",
+      "cover": "",
+      "gallery": [],
+      "link": ""
+    }
+  ]
+}
