@@ -69,6 +69,8 @@ content:
               - {name: nose_x, label: Nose tip X, type: number}
               - {name: nose_y, label: Nose tip Y, type: number}
               - {name: hairline, label: Hairline Y (where forehead meets hair), type: number}
+              - {name: nose_x_45, label: Nose tip X on the 45° view (right-facing), type: number}
+              - {name: nose_x_90, label: Nose tip X on the 90° profile (right-facing), type: number}
           - name: lead
             label: Intro sentence
             type: text

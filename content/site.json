@@ -46,8 +46,8 @@
     "views": {
       "left_34": "",
       "left_side": "",
-      "right_34": "",
-      "right_side": ""
+      "right_34": "images/head-right-45.webp",
+      "right_side": "images/head-right-90.webp"
     },
     "face": {
       "eye_left_x": 0.406,
@@ -58,7 +58,9 @@
       "eye_h": 0.016,
       "nose_x": 0.495,
       "nose_y": 0.503,
-      "hairline": 0.33
+      "hairline": 0.33,
+      "nose_x_45": 0.692,
+      "nose_x_90": 0.88
     }
   },
   "contact": {
