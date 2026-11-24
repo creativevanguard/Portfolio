@@ -42,7 +42,24 @@
         "name": "Brand identity",
         "detail": "Logo, type, colour"
       }
-    ]
+    ],
+    "views": {
+      "left_34": "",
+      "left_side": "",
+      "right_34": "",
+      "right_side": ""
+    },
+    "face": {
+      "eye_left_x": 0.406,
+      "eye_left_y": 0.405,
+      "eye_right_x": 0.606,
+      "eye_right_y": 0.417,
+      "eye_w": 0.046,
+      "eye_h": 0.016,
+      "nose_x": 0.495,
+      "nose_y": 0.503,
+      "hairline": 0.33
+    }
   },
   "contact": {
     "email": "hello@yourname.com",

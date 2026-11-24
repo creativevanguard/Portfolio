@@ -147,6 +147,11 @@ body.paper header{color:var(--paper-ink)}
 .about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);min-height:100%}
 .pc{position:sticky;top:0;height:100svh}
 #cloud{width:100%;height:100%;display:block;touch-action:pan-y}
+#cloud{cursor:grab}#cloud:active{cursor:grabbing}
+.headimg{width:100%;height:100%;object-fit:contain;object-position:50% 60%;transition:transform .2s ease-out}
+.hhint{position:absolute;left:50%;bottom:calc(var(--gate) + 26px);transform:translateX(-50%);margin:0;font-size:13px;color:#7b6a5a;background:rgba(233,223,207,.8);padding:6px 14px;border-radius:99px;white-space:nowrap;transition:opacity .6s;pointer-events:none}
+.hhint.gone{opacity:0}.nohead .hhint{display:none}
+@media (max-width:900px){.hhint{bottom:14px}}
 .ab{padding:calc(var(--gate) + 110px + var(--st)) max(5vw,22px) 100px max(2vw,22px)}
 .ab .k{font-size:15px;color:#7b6a5a;margin:0 0 10px}
 .ab h2{margin:0 0 26px;font-weight:600;font-size:clamp(56px,8vw,128px);line-height:.92;letter-spacing:-.03em}
@@ -386,7 +391,7 @@ body.paper header{color:var(--paper-ink)}
   <section class="view scroller" id="v-about" aria-label="About">
     <div class="topfade" aria-hidden="true"></div>
     <div class="about">
-      <div class="pc"><canvas id="cloud" aria-label="Portrait made of particles"></canvas></div>
+      <div class="pc"><canvas id="cloud" aria-label="Portrait — drag to turn the head"></canvas><p class="hhint" id="hhint"><span aria-hidden="true">⟷</span> Drag to turn my head</p></div>
       <div class="ab">
         <p class="k rv">About</p>
         <h2 class="rv">Dhanu</h2>
@@ -703,70 +708,135 @@ function closeSheet(){sheet.classList.remove('on');lastFocus&&lastFocus.focus&&l
 sheet.addEventListener('click',e=>{if(e.target===sheet)closeSheet()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('on'))closeSheet()});
 
-/* ---------- point-cloud portrait ---------- */
-const cl=$('#cloud'),clx=cl.getContext('2d');let SW=180,SH=230,cPhoto=false,cst=2,pts=[],buckets=[],cmx=0,cmy=0,crx=0,cry=0,cIn=false,cpx=-1e4,cpy=-1e4;
-(function buildCloud(){
-  const w=180,h=230,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');
-  let gr=g.createRadialGradient(90,250,10,90,250,110);gr.addColorStop(0,'#5a4032');gr.addColorStop(1,'#2a1c15');
-  g.fillStyle=gr;g.beginPath();g.ellipse(90,250,96,78,0,0,7);g.fill();
-  g.fillStyle='#b77e5a';g.fillRect(70,140,40,40);
-  gr=g.createRadialGradient(76,80,6,90,96,64);gr.addColorStop(0,'#f0c7a2');gr.addColorStop(.6,'#c98d64');gr.addColorStop(1,'#7b4b31');
-  g.fillStyle=gr;g.beginPath();g.ellipse(90,96,46,58,0,0,7);g.fill();
-  g.fillStyle='#21160f';g.beginPath();g.ellipse(90,58,49,30,0,Math.PI,0);g.fill();g.fillRect(41,56,98,10);
-  g.fillStyle='#2a1a12';[[72,92],[108,92]].forEach(([x,y])=>{g.beginPath();g.ellipse(x,y,6,3.2,0,0,7);g.fill()});
-  g.strokeStyle='#3a2418';g.lineWidth=3;[[64,82,80,80],[100,80,116,82]].forEach(([a,b,cc,d])=>{g.beginPath();g.moveTo(a,b);g.lineTo(cc,d);g.stroke()});
-  g.strokeStyle='rgba(80,40,25,.6)';g.lineWidth=2;g.beginPath();g.moveTo(90,96);g.lineTo(86,116);g.lineTo(93,118);g.stroke();
-  g.strokeStyle='#6b3424';g.lineWidth=2.5;g.beginPath();g.moveTo(79,132);g.quadraticCurveTo(90,137,101,132);g.stroke();
-  sampleCloud(g,false);
+/* ---------- rotatable mugshot ---------- */
+const cl=$('#cloud'),hint=$('#hhint');
+const FD={eye_left_x:.406,eye_left_y:.405,eye_right_x:.606,eye_right_y:.417,eye_w:.046,eye_h:.016,nose_x:.495,nose_y:.503,hairline:.33};
+const F={};for(const k in FD){const v=parseFloat((A.face||{})[k]);F[k]=isFinite(v)&&v>0?v:FD[k]}
+const VW=A.views||{};
+const H={yaw:0,pitch:0,vel:0,pv:0,mode:'follow',dragX:0,dragY:0,dragYaw:0,dragPitch:0,rel:0,last:0,lastYaw:0,
+  gx:0,gy:0,tgx:0,tgy:0,nextSac:0,blink:0,blinkT:-1,nextBlink:0,dbl:false,hair:0,hv:0,hairY:0,hvy:0,px:null,py:null,lastMove:-1e9,intro:-1e9,fade:0,introSign:1};
+let gl=null,GP=null,U={},VIEWS=[],maxYaw=26,headReady=false,imgFallback=null,front=null;
+function blur(a,w,h,r){const t=new Float32Array(a.length);for(let p=0;p<3;p++){
+  for(let y=0;y<h;y++){let s=0;for(let x=-r;x<=r;x++)s+=a[y*w+clamp(x,0,w-1)];for(let x=0;x<w;x++){t[y*w+x]=s/(2*r+1);s+=a[y*w+clamp(x+r+1,0,w-1)]-a[y*w+clamp(x-r,0,w-1)]}}
+  for(let x=0;x<w;x++){let s=0;for(let y=-r;y<=r;y++)s+=t[clamp(y,0,h-1)*w+x];for(let y=0;y<h;y++){a[y*w+x]=s/(2*r+1);s+=t[clamp(y+r+1,0,h-1)*w+x]-t[clamp(y-r,0,h-1)*w+x]}}}return a}
+function prep(img,isFront){
+  const NW=img.naturalWidth,NH=img.naturalHeight,k=Math.min(1,(coarse?900:1400)/Math.max(NW,NH));
+  const c=document.createElement('canvas');c.width=Math.round(NW*k);c.height=Math.round(NH*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  const dw=128,dh=Math.round(128*NH/NW),s=document.createElement('canvas');s.width=dw;s.height=dh;const sg=s.getContext('2d');sg.drawImage(img,0,0,dw,dh);
+  const px=sg.getImageData(0,0,dw,dh),d=px.data,al=new Float32Array(dw*dh),hr=new Float32Array(dw*dh);let opaque=true;
+  for(let i=0;i<dw*dh;i++){al[i]=d[i*4+3]/255;if(al[i]<.95)opaque=false}
+  if(opaque)for(let y=0;y<dh;y++)for(let x=0;x<dw;x++){const ex=(x/dw-.5)/.36,ey=(y/dh-.5)/.5;al[y*dw+x]=ex*ex+ey*ey<1?1:0}
+  for(let y=0;y<dh;y++)for(let x=0;x<dw;x++){const i=y*dw+x,u=x/dw,v=y/dh,lum=(d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11)/255;
+    const inHair=v<F.hairline+.02||(v<F.hairline+.15&&Math.abs(u-.5)>.27);hr[i]=al[i]>.5&&lum<.3&&inHair?1:0}
+  const dep=blur(al.slice(),dw,dh,12);blur(hr,dw,dh,2);
+  for(let y=0;y<dh;y++)for(let x=0;x<dw;x++){const i=y*dw+x,u=x/dw,v=y/dh;let z=Math.pow(dep[i],.8)*.6;
+    const fx=(u-.5)/.27,fy=(v-.47)/.32;z+=Math.max(0,1-fx*fx-fy*fy)*.25;
+    if(isFront){const nx=(u-F.nose_x)/.05,ny=(v-F.nose_y+.03)/.085;z+=.2*Math.exp(-(nx*nx+ny*ny))}
+    d[i*4]=clamp(z,0,1)*255;d[i*4+1]=clamp(hr[i]*1.4,0,1)*255;d[i*4+2]=0;d[i*4+3]=255}
+  sg.putImageData(px,0,0);return{img:c,dat:s,ar:NW/NH};
+}
+const VS=`attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}`;
+const FS=`precision highp float;varying vec2 v;
+uniform sampler2D iA,dA,iB,dB;uniform float mixAB,flA,flB,eA,eB,blink,time,fade;
+uniform vec2 offA,offB,gaze,hair,light;uniform vec4 fit,eyeL,eyeR;
+vec2 fl(vec2 s,float f){return vec2(f>.5?1.-s.x:s.x,s.y);}
+vec2 eyeW(vec2 s,vec4 e){vec2 d=(s-e.xy)/e.zw;float r=dot(d,d);
+  if(r<1.){float f=(1.-r)*(1.-r);s-=vec2(gaze.x*e.z*.24,gaze.y*e.w*.35)*f;}
+  vec2 q=(s-e.xy)/vec2(e.z*1.05,e.w*1.5);float r2=dot(q,q);
+  if(blink>0.&&r2<1.){float k=smoothstep(1.,.35,r2)*blink;s.y=mix(s.y,e.y-e.w*.95,k);}
+  return s;}
+vec4 view(sampler2D im,sampler2D dt,vec2 u,vec2 off,float f,float eyes){
+  vec2 s=u;for(int i=0;i<6;i++){float d=texture2D(dt,fl(clamp(s,0.,1.),f)).r;s=u-off*(d-.3);}
+  float hw=texture2D(dt,fl(clamp(s,0.,1.),f)).g;
+  float tip=smoothstep(.45,0.,s.y)*.6+.4;
+  s-=hw*tip*vec2(hair.x+.0022*sin(time*1.6+s.y*22.+s.x*8.)+.0012*sin(time*2.9+s.x*30.),hair.y+.0012*sin(time*1.3+s.x*17.));
+  if(eyes>.5){s=eyeW(s,eyeL);s=eyeW(s,eyeR);}
+  if(s.x<0.||s.x>1.||s.y<0.||s.y>1.)return vec4(0.);
+  vec2 g=fl(s,f);vec4 c=texture2D(im,g);
+  float e=.012,dx=texture2D(dt,fl(s+vec2(e,0.),f)).r-texture2D(dt,fl(s-vec2(e,0.),f)).r,dy=texture2D(dt,fl(s+vec2(0.,e),f)).r-texture2D(dt,fl(s-vec2(0.,e),f)).r;
+  vec3 n=normalize(vec3(-dx*3.,dy*3.,1.)),L=normalize(vec3(light,1.));
+  float sp=pow(max(dot(reflect(-L,n),vec3(0.,0.,1.)),0.),14.);
+  c.rgb=c.rgb*(.9+.1*max(dot(n,L),0.))+sp*.09*c.a;return c;}
+void main(){vec2 u=(v-fit.xy)/fit.zw+.5;
+  vec4 a=view(iA,dA,u,offA,flA,eA);vec4 b=mixAB>.001?view(iB,dB,u,offB,flB,eB):a;
+  gl_FragColor=mix(a,b,mixAB)*fade;}`;
+function tex(src,unit){const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
+  [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(p=>gl.texParameteri(gl.TEXTURE_2D,p,gl.LINEAR));
+  [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T].forEach(p=>gl.texParameteri(gl.TEXTURE_2D,p,gl.CLAMP_TO_EDGE));return t}
+function initGL(){try{gl=cl.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false})}catch(e){}
+  if(!gl)return false;const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
+  try{GP=gl.createProgram();gl.attachShader(GP,sh(gl.VERTEX_SHADER,VS));gl.attachShader(GP,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(GP);gl.useProgram(GP)}catch(e){console.warn(e);gl=null;return false}
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(GP,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  'iA dA iB dB mixAB flA flB eA eB blink time fade offA offB gaze hair light fit eyeL eyeR'.split(' ').forEach(n=>U[n]=gl.getUniformLocation(GP,n));
+  gl.uniform1i(U.iA,0);gl.uniform1i(U.dA,1);gl.uniform1i(U.iB,2);gl.uniform1i(U.dB,3);gl.clearColor(0,0,0,0);return true}
+function loadImg(src){return new Promise(r=>{if(!src)return r(null);const im=new Image();if(/^https?:/i.test(src))im.crossOrigin='anonymous';im.onload=()=>r(im);im.onerror=()=>r(null);im.src=src})}
+(async function setupHead(){
+  const fsrc=media(A.portrait);if(!fsrc){cl.closest('.pc').classList.add('nohead');return}
+  const [fi,l34,ls,r34,rs]=await Promise.all([fsrc,VW.left_34,VW.left_side,VW.right_34,VW.right_side].map(x=>loadImg(media(x))));
+  if(!fi){cl.closest('.pc').classList.add('nohead');return}
+  if(!initGL()){imgFallback=document.createElement('img');imgFallback.src=fsrc;imgFallback.alt='';imgFallback.className='headimg';cl.replaceWith(imgFallback);headReady=true;return}
+  const mk=(im,ang,flip,isF)=>{const p=prep(im,isF);p.ang=ang;p.flip=flip?1:0;p.front=isF;p.ti=tex(p.img,0);p.td=tex(p.dat,1);return p};
+  front=mk(fi,0,false,true);VIEWS=[front];
+  const L34=l34?mk(l34,-45,false,false):null,LS=ls?mk(ls,-90,false,false):null,R34=r34?mk(r34,45,false,false):null,RS=rs?mk(rs,90,false,false):null;
+  const mir=(v,a)=>v?Object.assign({},v,{ang:a,flip:1}):null;
+  [L34||mir(R34,-45),LS||mir(RS,-90),R34||mir(L34,45),RS||mir(LS,90)].forEach(v=>v&&VIEWS.push(v));
+  VIEWS.sort((a,b)=>a.ang-b.ang);const mx=Math.max(...VIEWS.map(v=>Math.abs(v.ang)));maxYaw=mx>=90?90:mx>=45?62:26;
+  headReady=true;if($('#v-about').classList.contains('on'))scatter();
 })();
-function sampleCloud(g,photo,w=180,h=230,alphaMode=false){const d=g.getImageData(0,0,w,h).data,map=new Map(),np=[];
-  cst=photo?1:(coarse||innerWidth<700?3:2);const st=cst,q=photo?3:4;
-  for(let y=0;y<h;y+=st)for(let x=0;x<w;x+=st){const i=(y*w+x)*4,al=d[i+3];if(al<40)continue;
-    let r=d[i],gg=d[i+1],b=d[i+2],z;
-    if(photo){
-      if(alphaMode){if(al<210&&Math.random()>al/210)continue}
-      else{const ex=(x-w/2)/(w*.5),ey=(y-h*.52)/(h*.5),rr=ex*ex+ey*ey;if(rr>1||(rr>.78&&Math.random()<(rr-.78)*4.5))continue}
-      const fb=y/h;if(fb>.88&&Math.random()<(fb-.88)/.12)continue;
-      r=clamp((r-128)*1.12+130,0,255)|0;gg=clamp((gg-128)*1.12+130,0,255)|0;b=clamp((b-128)*1.12+130,0,255)|0;
-      const ex=(x-w/2)/(w*.5);z=Math.sqrt(Math.max(0,1-ex*ex))*24+((r+gg+b)/3-128)/255*6;
-    }else{const nx=(x-90)/60;z=y<175?Math.sqrt(Math.max(0,1-((x-90)/50)**2-((y-96)/62)**2))*46:Math.sqrt(Math.max(0,1-nx*nx*.5))*22}
-    const key=`rgb(${r>>q<<q},${gg>>q<<q},${b>>q<<q})`;if(!map.has(key))map.set(key,[]);
-    const p={hx:x-w/2+st/2,hy:y-h/2,hz:z,x:0,y:0,vx:0,vy:0,ph:Math.random()*6.28,sz:photo?1:.9+Math.random()*.9};np.push(p);map.get(key).push(p)}
-  SW=w;SH=h;cPhoto=photo;pts=np;buckets=[...map.entries()];}
-if(A.portrait){const im=new Image(),src=media(A.portrait);if(/^https?:/i.test(src))im.crossOrigin='anonymous';
-  im.onload=()=>{try{
-    const mob=coarse||innerWidth<700,w=mob?136:210,h=Math.round(w*1.28),NW=im.naturalWidth,NH=im.naturalHeight;
-    const tw=120,th=Math.max(1,Math.round(tw*NH/NW)),t=document.createElement('canvas');t.width=tw;t.height=th;const tg=t.getContext('2d');tg.drawImage(im,0,0,tw,th);
-    const td=tg.getImageData(0,0,tw,th).data;let hasA=false;for(let i=3;i<td.length;i+=4)if(td[i]<245){hasA=true;break}
-    let cx0,cy0,cw,ch;
-    if(hasA){let top=-1;for(let y=0;y<th&&top<0;y++)for(let x=0;x<tw;x++)if(td[(y*tw+x)*4+3]>80){top=y;break}
-      if(top<0)top=0;let xs=0,n=0;const band=Math.max(1,Math.round((th-top)*.3));
-      for(let y=top;y<Math.min(th,top+band);y++)for(let x=0;x<tw;x++)if(td[(y*tw+x)*4+3]>80){xs+=x;n++}
-      const sc0=NW/tw;cy0=Math.max(0,top-(th-top)*.05)*sc0;ch=NH-cy0;cw=ch*w/h;cx0=(n?xs/n:tw/2)*sc0-cw/2}
-    else{const r=Math.max(w/NW,h/NH);cw=w/r;ch=h/r;cx0=(NW-cw)/2;cy0=(NH-ch)*.25}
-    const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(im,cx0,cy0,cw,ch,0,0,w,h);
-    sampleCloud(g,true,w,h,hasA);if(cur==='about')scatter()}catch(e){}};im.src=src}
-function scatter(){const W=cl.clientWidth,H=cl.clientHeight;pts.forEach(p=>{const a=Math.random()*6.28,r=Math.max(W,H)*(.3+Math.random()*.7);p.x=W/2+Math.cos(a)*r;p.y=H/2+Math.sin(a)*r;p.vx=p.vy=0})}
-cl.addEventListener('pointermove',e=>{const r=cl.getBoundingClientRect();cpx=e.clientX-r.left;cpy=e.clientY-r.top;cmx=cpx/r.width*2-1;cmy=cpy/r.height*2-1});
-cl.addEventListener('pointerleave',()=>{cpx=cpy=-1e4;cmx=cmy=0});
-function tickAbout(t){
-  const dpr=Math.min(devicePixelRatio||1,2),W=cl.clientWidth,H=cl.clientHeight;if(!W)return;
-  if(cl.width!==Math.round(W*dpr)||cl.height!==Math.round(H*dpr)){cl.width=Math.round(W*dpr);cl.height=Math.round(H*dpr)}
-  const c=clx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-  const sc=cPhoto?Math.min(W*.9/SW,H*.84/SH):Math.min(W/190,H/250)*.78,ox=W/2,oy=H*(cPhoto?.53:.5);
-  let tx=cmx,ty=cmy;if(coarse||(cpx<-1e3)){tx=Math.sin(t/2400)*.6;ty=Math.cos(t/3300)*.25}
-  const ry=cPhoto?.3:.55,rx=cPhoto?.16:.3,jit=cPhoto?.25:.6,rad=cPhoto?4200:7000;
-  cry=lerp(cry,tx*ry,.05);crx=lerp(crx,ty*rx,.05);
-  const cY=Math.cos(cry),sY=Math.sin(cry),cX=Math.cos(crx),sX=Math.sin(crx),ds=cPhoto?Math.max(1.1,sc*cst*.8):0;
-  for(const [col,arr] of buckets){c.fillStyle=col;
-    for(const p of arr){
-      let x=p.hx*cY+p.hz*sY,z=-p.hx*sY+p.hz*cY,y=p.hy*cX-z*sX;z=p.hy*sX+z*cX;
-      const f=420/(420-z),tx2=ox+x*sc*f+Math.sin(t/900+p.ph)*jit,ty2=oy+y*sc*f+Math.cos(t/1100+p.ph)*jit;
-      if(reduce){p.x=tx2;p.y=ty2}else{
-        p.vx+=(tx2-p.x)*.012;p.vy+=(ty2-p.y)*.012;
-        const dx=p.x-cpx,dy=p.y-cpy,dd=dx*dx+dy*dy;if(dd<rad){const k=(rad-dd)/rad*2.2,l=Math.sqrt(dd)||1;p.vx+=dx/l*k;p.vy+=dy/l*k}
-        p.vx*=.86;p.vy*=.86;p.x+=p.vx;p.y+=p.vy}
-      const s=cPhoto?ds*f:p.sz*sc*.55*f*(cst/2);c.fillRect(p.x,p.y,s,s)}}
+function scatter(){H.intro=performance.now();H.introSign=Math.random()<.5?-1:1;H.yaw=H.introSign*Math.min(maxYaw,40);H.mode='follow';H.vel=0;H.fade=0;
+  hint&&hint.classList.remove('gone');}
+const head=()=>{const r=(imgFallback||cl).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.42,r}};
+$('#v-about').addEventListener('pointermove',e=>{H.px=e.clientX;H.py=e.clientY;H.lastMove=performance.now();
+  if(H.mode==='drag'){const dx=e.clientX-H.dragX,dy=e.clientY-H.dragY;const ny=clamp(H.dragYaw+dx*.32,-maxYaw-8,maxYaw+8);
+    H.vel=ny-H.yaw;H.yaw=ny;H.pitch=clamp(H.dragPitch+dy*.12,-14,14)}},{passive:true});
+$('#v-about').addEventListener('pointerleave',()=>{H.px=null});
+cl.addEventListener('pointerdown',e=>{H.mode='drag';H.dragX=e.clientX;H.dragY=e.clientY;H.dragYaw=H.yaw;H.dragPitch=H.pitch;H.vel=0;
+  try{cl.setPointerCapture(e.pointerId)}catch(_){}hint&&hint.classList.add('gone')});
+const relDrag=()=>{if(H.mode==='drag'){H.mode='free';H.rel=performance.now()}};
+cl.addEventListener('pointerup',relDrag);cl.addEventListener('pointercancel',relDrag);
+cl.addEventListener('dblclick',()=>{H.blinkT=performance.now();H.dbl=false});
+function tickAbout(t){  if(!headReady)return;const dt=Math.max(.05,Math.min(50,t-(H.last||t))/16.67);H.last=t;const hd=head();
+  const hasP=H.px!==null&&!coarse&&t-H.lastMove<6000;
+  // gaze target
+  if(hasP){H.tgx=clamp((H.px-hd.x)/(innerWidth*.28),-1,1);H.tgy=clamp((H.py-hd.y)/(innerHeight*.35),-1,1)}
+  else if(H.mode==='drag'&&H.px!==null){H.tgx=clamp((H.px-hd.x)/(hd.r.width*.6),-1,1);H.tgy=clamp((H.py-hd.y)/(hd.r.height*.6),-1,1)}
+  else if(t>H.nextSac){H.tgx=(Math.random()*2-1)*.8;H.tgy=(Math.random()*2-1)*.4;H.nextSac=t+700+Math.random()*2200}
+  const gk=1-Math.pow(.6,dt);H.gx=lerp(H.gx,H.tgx,gk);H.gy=lerp(H.gy,H.tgy,gk);
+  // head
+  const follow=maxYaw>26?32:22,ty=hasP?H.tgx*follow:Math.sin(t/3800)*follow*.55,tp=hasP?H.tgy*7:Math.sin(t/5100)*3;
+  if(H.mode==='free'){H.yaw+=H.vel*dt;H.vel*=Math.pow(.9,dt);if(Math.abs(H.yaw)>maxYaw){H.yaw=lerp(H.yaw,Math.sign(H.yaw)*maxYaw,.25);H.vel*=.5}
+    if(t-H.rel>1600&&Math.abs(H.vel)<.15)H.mode='follow'}
+  if(H.mode==='follow'){const k=1-Math.pow(t-H.intro<1400?.93:.955,dt);H.yaw=lerp(H.yaw,ty,k);H.pitch=lerp(H.pitch,tp,k)}
+  if(H.mode!=='drag')H.yaw=clamp(H.yaw,-maxYaw-8,maxYaw+8);
+  const yv=(H.yaw-H.lastYaw)/dt;H.lastYaw=H.yaw;
+  // hair spring
+  H.hv+=(-yv*.0016-H.hair)*.12*dt;H.hv*=Math.pow(.82,dt);H.hair+=H.hv*dt;H.hair=clamp(H.hair,-.02,.02);
+  H.hvy+=((Math.abs(yv)*-.0004)-H.hairY)*.1*dt;H.hvy*=Math.pow(.8,dt);H.hairY+=H.hvy*dt;if(!isFinite(H.hair+H.hv+H.hairY+H.hvy))H.hair=H.hv=H.hairY=H.hvy=0;
+  // blink
+  if(H.blinkT<0&&t>H.nextBlink){H.blinkT=t;H.dbl=Math.random()<.18}
+  if(H.blinkT>=0){const e=t-H.blinkT,d=170;H.blink=e<d?Math.sin(Math.PI*e/d):0;if(e>=d){if(H.dbl){H.dbl=false;H.blinkT=t+60}else{H.blinkT=-1;H.nextBlink=t+2200+Math.random()*3800}}}
+  H.fade=reduce?1:clamp((t-H.intro)/900,0,1);
+  if(imgFallback){imgFallback.style.transform=`perspective(900px) rotateY(${clamp(H.yaw,-25,25)}deg) rotateX(${-H.pitch*.6}deg)`;imgFallback.style.opacity=H.fade;return}
+  const dpr=Math.min(devicePixelRatio||1,2),W=cl.clientWidth,Hh=cl.clientHeight;if(!W)return;
+  if(cl.width!==Math.round(W*dpr)||cl.height!==Math.round(Hh*dpr)){cl.width=Math.round(W*dpr);cl.height=Math.round(Hh*dpr)}
+  gl.viewport(0,0,cl.width,cl.height);gl.clear(gl.COLOR_BUFFER_BIT);
+  const ar=front.ar,eh=.84,sz=Math.min(eh,.92*W/(Hh*ar));const fw=sz*ar*Hh/W,fh=sz;
+  const yawR=H.yaw;let a=VIEWS[0],b=VIEWS[0],w=0;
+  for(let i=0;i<VIEWS.length-1;i++)if(yawR>=VIEWS[i].ang&&yawR<=VIEWS[i+1].ang){a=VIEWS[i];b=VIEWS[i+1];w=(yawR-a.ang)/(b.ang-a.ang)}
+  if(yawR<VIEWS[0].ang){a=b=VIEWS[0]}if(yawR>VIEWS[VIEWS.length-1].ang){a=b=VIEWS[VIEWS.length-1]}
+  if(a!==b){const ws=clamp((w-.3)/.4,0,1);w=ws*ws*(3-2*ws);if(w<.001)b=a;else if(w>.999){a=b;w=0}}else w=0;
+  const ofs=v=>{const r=clamp(yawR-v.ang,-30,30)*Math.PI/180,p=H.pitch*Math.PI/180;return[Math.sin(r)*.15,-Math.sin(p)*.1]};
+  [[a,0],[b,2]].forEach(([v,u])=>{gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,v.ti);gl.activeTexture(gl.TEXTURE1+u);gl.bindTexture(gl.TEXTURE_2D,v.td)});
+  const oa=ofs(a),ob=ofs(b),intro=1-H.fade,sc=1+intro*.04;
+  gl.uniform4f(U.fit,.5+H.yaw/maxYaw*.012,.52+intro*.02,fw*sc,fh*sc);
+  gl.uniform2f(U.offA,oa[0],oa[1]);gl.uniform2f(U.offB,ob[0],ob[1]);gl.uniform1f(U.mixAB,w);
+  gl.uniform1f(U.flA,a.flip);gl.uniform1f(U.flB,b.flip);gl.uniform1f(U.eA,a.front?1:0);gl.uniform1f(U.eB,b.front?1:0);
+  gl.uniform4f(U.eyeL,F.eye_left_x,F.eye_left_y,F.eye_w,F.eye_h);gl.uniform4f(U.eyeR,F.eye_right_x,F.eye_right_y,F.eye_w,F.eye_h);
+  const fy=clamp(1-Math.abs(H.yaw)/40,0,1);gl.uniform2f(U.gaze,clamp(H.gx-H.yaw/60,-1,1)*fy,H.gy*fy);gl.uniform1f(U.blink,H.blink*fy);
+  gl.uniform2f(U.hair,H.hair,H.hairY);gl.uniform1f(U.time,t/1000);gl.uniform1f(U.fade,H.fade);
+  gl.uniform2f(U.light,-.45-H.yaw/70,-.55+H.pitch/40);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
 }
 
 /* ---------- shattered glass 404 ---------- */

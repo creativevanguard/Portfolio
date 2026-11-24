@@ -35,9 +35,40 @@ content:
         type: object
         fields:
           - name: portrait
-            label: Portrait (turns into the particle portrait)
+            label: Portrait — front view (0°)
             type: image
-            description: A head-and-shoulders photo, face centred, on a plain light background works best.
+            description: Front-facing head shot with the background removed (transparent PNG). This becomes the rotatable mugshot.
+          - name: views
+            label: Extra head-turn views (optional)
+            type: object
+            description: Same lighting, crop and size as the front view, background removed. Upload one side and the other is mirrored automatically.
+            fields:
+              - name: left_34
+                label: Three-quarter left (45°) — face turned toward the left of the image
+                type: image
+              - name: left_side
+                label: Side profile left (90°) — face pointing to the left of the image
+                type: image
+              - name: right_34
+                label: Three-quarter right (45°) — face turned toward the right of the image
+                type: image
+              - name: right_side
+                label: Side profile right (90°) — face pointing to the right of the image
+                type: image
+          - name: face
+            label: Face points on the front view (advanced)
+            type: object
+            description: "Positions as fractions of the image (0 = left/top, 1 = right/bottom). Only change these if you replace the front photo and the eyes don't line up."
+            fields:
+              - {name: eye_left_x, label: Left eye centre X, type: number}
+              - {name: eye_left_y, label: Left eye centre Y, type: number}
+              - {name: eye_right_x, label: Right eye centre X, type: number}
+              - {name: eye_right_y, label: Right eye centre Y, type: number}
+              - {name: eye_w, label: Eye half-width, type: number}
+              - {name: eye_h, label: Eye half-height, type: number}
+              - {name: nose_x, label: Nose tip X, type: number}
+              - {name: nose_y, label: Nose tip Y, type: number}
+              - {name: hairline, label: Hairline Y (where forehead meets hair), type: number}
           - name: lead
             label: Intro sentence
             type: text
