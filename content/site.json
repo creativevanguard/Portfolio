@@ -3,9 +3,8 @@
   "role": "Web & brand designer",
   "location": "Sri Lanka",
   "headline": "Web & brand Designer",
-  "hero_photo": "",
   "about": {
-    "portrait": "",
+    "portrait": "images/Profile.jpg",
     "lead": "Web and brand designer who makes real estate and hospitality brands look as good online as their buildings do in person.",
     "bio": "Years inside a Dubai real estate agency taught me the work that actually sells property: launch brochures, investor presentations, community market reports and the client documents that close deals.\n\nNow based in Sri Lanka, I design websites and brand systems for developers, holiday-home operators and founders — from first concept in Figma to the final responsive page.",
     "experience": [
@@ -82,10 +81,7 @@
         "Desktop",
         "Mobile"
       ],
-      "description": "Homepage and inner pages for a Dubai real estate firm — taken from a PDF concept to a responsive Figma build.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "Homepage and inner pages for a Dubai real estate firm — taken from a PDF concept to a responsive Figma build."
     },
     {
       "title": "Escape 24",
@@ -97,10 +93,7 @@
         "Hospitality",
         "Booking"
       ],
-      "description": "A calmer, more premium booking site for a Dubai holiday-homes operator, built around the stays rather than the forms.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "A calmer, more premium booking site for a Dubai holiday-homes operator, built around the stays rather than the forms."
     },
     {
       "title": "Ellington Properties",
@@ -112,10 +105,7 @@
         "Launch",
         "Print"
       ],
-      "description": "Launch and sales collateral for residential projects — brochures, floor-plan books and campaign pieces.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "Launch and sales collateral for residential projects — brochures, floor-plan books and campaign pieces."
     },
     {
       "title": "Pangea Dubai",
@@ -126,10 +116,7 @@
         "Investor decks",
         "Keynote"
       ],
-      "description": "Client-facing presentations that turn project data and renders into a clear story for buyers and investors.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "Client-facing presentations that turn project data and renders into a clear story for buyers and investors."
     },
     {
       "title": "Market reports",
@@ -140,10 +127,7 @@
         "Editorial",
         "Charts"
       ],
-      "description": "Quarterly community market reports — prices, transactions and supply, designed to be read in five minutes.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "Quarterly community market reports — prices, transactions and supply, designed to be read in five minutes."
     },
     {
       "title": "No Sugar",
@@ -155,10 +139,7 @@
         "Apparel",
         "Social"
       ],
-      "description": "My statement-driven clothing brand — identity, product graphics and the voice that runs through every drop.",
-      "cover": "",
-      "gallery": [],
-      "link": ""
+      "description": "My statement-driven clothing brand — identity, product graphics and the voice that runs through every drop."
     }
   ]
 }
