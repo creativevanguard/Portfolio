@@ -29,6 +29,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   box-shadow:0 0 0 100vmax var(--bg),inset 0 0 110px 34px rgba(0,0,0,.72),inset 0 0 18px 6px rgba(0,0,0,.8)}
 #grain{position:fixed;inset:0;width:100%;height:100%;z-index:39;pointer-events:none;mix-blend-mode:overlay;opacity:.55}
 @media (pointer:coarse){#grain{mix-blend-mode:normal;opacity:.18}}
+body.nograin #grain,body.nograin .flick{display:none}
+.gtog{position:fixed;z-index:43;left:calc(var(--gate) + 16px);bottom:calc(var(--gate) + 14px + var(--sb));display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 12px 0 10px;border-radius:99px;font-size:13px;color:var(--ink);background:rgba(11,8,7,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(244,236,226,.18);transition:color .4s,background .4s,border-color .4s}
+.gtog .tr{width:30px;height:18px;border-radius:99px;background:rgba(244,236,226,.25);position:relative;transition:background .3s;flex:none}
+.gtog .tr::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#f4ece2;transition:transform .3s cubic-bezier(.3,.7,.3,1)}
+.gtog[aria-checked=true] .tr{background:var(--yel)}
+.gtog[aria-checked=true] .tr::after{transform:translateX(12px);background:#1b140e}
+body.paper .gtog{color:var(--paper-ink);background:rgba(233,223,207,.7);border-color:rgba(35,26,20,.2)}
+body.paper .gtog .tr{background:rgba(35,26,20,.2)}body.paper .gtog[aria-checked=true] .tr{background:var(--paper-ink)}body.paper .gtog[aria-checked=true] .tr::after{background:var(--yel)}
+@media (max-width:600px){.gtog{left:calc(var(--gate) + 10px);bottom:calc(var(--gate) + 10px + var(--sb));padding:0 10px 0 8px}.gtog .lb{display:none}}
 .flick{position:fixed;inset:0;z-index:38;pointer-events:none;background:#ffe9c8;mix-blend-mode:soft-light;opacity:0}
 .cut{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;overflow:hidden}
 .cut::before{content:"";position:absolute;left:0;right:0;height:22vh;top:-25vh;background:#050403;box-shadow:0 0 40px 20px #050403}
@@ -514,6 +524,7 @@ body.paper header{color:var(--paper-ink)}
 
 <div class="flick" id="flick"></div>
 <canvas id="grain" aria-hidden="true"></canvas>
+<button class="gtog" id="gtog" role="switch" aria-checked="true" aria-label="Film grain"><span class="tr" aria-hidden="true"></span><span class="lb">Grain</span></button>
 <div class="gate" aria-hidden="true"></div>
 <div class="cut" id="cut" aria-hidden="true"></div>
 
@@ -619,7 +630,12 @@ const noise=[0,1,2,3].map(()=>{const c=document.createElement('canvas');c.width=
   for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=60}x.putImageData(d,0,0);return c});
 let lastG=0;
 function sizeGrain(){gc.width=Math.ceil(innerWidth/2);gc.height=Math.ceil(innerHeight/2)}
-function tickGrain(t){
+let grainOn=true;
+{let saved=null;try{saved=localStorage.getItem('grain')}catch(e){}
+  grainOn=saved===null?!(coarse||innerWidth<=700):saved==='1';
+  const gt=$('#gtog');const apply=()=>{document.body.classList.toggle('nograin',!grainOn);gt.setAttribute('aria-checked',String(grainOn));gt.title=grainOn?'Turn film grain off':'Turn film grain on'};
+  apply();gt.addEventListener('click',()=>{grainOn=!grainOn;try{localStorage.setItem('grain',grainOn?'1':'0')}catch(e){}apply()});}
+function tickGrain(t){if(!grainOn)return;
   if(t-lastG<70&&!reduce)return;lastG=t;
   const W=gc.width,H=gc.height;gx.clearRect(0,0,W,H);
   gx.save();gx.fillStyle=gx.createPattern(noise[(Math.random()*4)|0],'repeat');gx.translate(Math.random()*160,Math.random()*160);gx.fillRect(-160,-160,W+320,H+320);gx.restore();
