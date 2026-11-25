@@ -158,5 +158,8 @@
       ],
       "description": "My statement-driven clothing brand — identity, product graphics and the voice that runs through every drop."
     }
-  ]
+  ],
+  "hero_video": "images/hero.mp4",
+  "hero_video_mobile": "images/hero-mobile.mp4",
+  "hero_poster": "images/hero-poster.jpg"
 }

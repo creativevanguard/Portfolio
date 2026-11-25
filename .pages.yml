@@ -25,6 +25,17 @@ content:
         label: Home page headline
         type: string
         description: Each word melts in separately. Keep it to 3–4 words, e.g. "Web & brand Designer".
+      - name: hero_video
+        label: Home page video (desktop)
+        type: file
+        description: Short looping MP4, muted, about 1920×1080 and under ~3 MB. Plays behind the headline. Leave empty to use the photo below.
+      - name: hero_video_mobile
+        label: Home page video (phones, optional)
+        type: file
+        description: Smaller copy of the same video (about 960 px wide) so it loads fast on mobile.
+      - name: hero_poster
+        label: Video still (shows while the video loads)
+        type: image
       - name: hero_photo
         label: Home page photo
         type: image
